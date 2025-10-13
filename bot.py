@@ -3,6 +3,9 @@
 
 import logging
 import time
+import os
+from threading import Thread
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler, MessageHandler, 
@@ -21,6 +24,26 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+
+# Простой HTTP-сервер для Render.com
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b'Bot is running')
+    
+    def log_message(self, format, *args):
+        pass  # Отключаем логи HTTP-сервера
+
+
+def start_health_server():
+    """Запускает HTTP-сервер для проверки здоровья на Render"""
+    port = int(os.environ.get('PORT', 10000))
+    server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+    logger.info(f"Health check server started on port {port}")
+    server.serve_forever()
 
 
 class ApplicationBot:
@@ -106,13 +129,13 @@ class ApplicationBot:
         
         # Проверяем, это админский чат
         if str(chat_id) in [str(chat_id_config) for chat_id_config in ADMIN_CHATS.values()]:
-            logger.info(f"Это админский чат {chat_id}")
+                logger.info(f"Это админский чат {chat_id}")
             
             # Проверяем ответ на сообщение бота
             if update.message.reply_to_message and update.message.reply_to_message.from_user.is_bot:
                 logger.info(f"Ответ администратора на сообщение бота - обрабатываем для пересылки")
-                await self.handle_admin_response(update, context)
-                return
+                        await self.handle_admin_response(update, context)
+            return
         
             # Любое другое сообщение в админском чате игнорируем
             return
@@ -149,7 +172,7 @@ class ApplicationBot:
         }
         
         # Отправляем заявку админу
-        admin_message = f"""
+            admin_message = f"""
 📋 НОВАЯ ЗАЯВКА
 
 💸 <b>{operation_text}</b>
@@ -160,25 +183,25 @@ class ApplicationBot:
 📝 Заявка: {application_text}
 
 ⏰ Время: {time.strftime('%Y-%m-%d %H:%M:%S')}
-        """
-        
-        try:
+            """
+            
+            try:
             await context.bot.send_message(
                 chat_id=ADMIN_CHATS[direction],
-                text=admin_message,
+                    text=admin_message,
                 parse_mode='HTML'
-            )
-            
+                )
+                
             # Отправляем подтверждение пользователю
-            await update.message.reply_text(
+                await update.message.reply_text(
                 f"✅ Заявка отправлена в направление '{DIRECTIONS[direction]}'!\n\n"
                 f"💸 Тип операции: {operation_text}\n\n"
                 "⏳ Ожидайте ответа от администратора."
-            )
-            
-            # Очищаем состояние пользователя
+                )
+                
+                # Очищаем состояние пользователя
             del self.user_states[user_id]
-            
+                
         except Exception as e:
             logger.error(f"Ошибка отправки заявки: {e}")
             await update.message.reply_text(
@@ -268,8 +291,8 @@ class ApplicationBot:
         
         if not users:
             await context.bot.send_message(chat_id=chat_id, text="❌ Пользователи не найдены.")
-            return
-        
+                return
+            
         message = "👥 ВСЕ ПОЛЬЗОВАТЕЛИ БОТА:\n\n"
         
         for i, user in enumerate(users[:50], 1):  # Показываем только первых 50
@@ -354,7 +377,7 @@ class ApplicationBot:
         
         if self.db.unblock_user(user_id):
             await context.bot.send_message(chat_id=chat_id, text=f"✅ Пользователь {user_id} разблокирован.")
-        else:
+            else:
             await context.bot.send_message(chat_id=chat_id, text=f"❌ Ошибка разблокировки пользователя {user_id}.")
     
     async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -385,6 +408,10 @@ def main():
     if not any(ADMIN_CHATS.values()):
         print("ОШИБКА: Ни один админский чат не настроен!")
         return
+    
+    # Запускаем HTTP-сервер в отдельном потоке для Render.com
+    health_thread = Thread(target=start_health_server, daemon=True)
+    health_thread.start()
     
     print("\nЗапускаем бота...")
     
