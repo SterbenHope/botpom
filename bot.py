@@ -291,7 +291,7 @@ class ApplicationBot:
         
         if not users:
             await context.bot.send_message(chat_id=chat_id, text="❌ Пользователи не найдены.")
-                return
+            return
             
         message = "👥 ВСЕ ПОЛЬЗОВАТЕЛИ БОТА:\n\n"
         
@@ -377,7 +377,7 @@ class ApplicationBot:
         
         if self.db.unblock_user(user_id):
             await context.bot.send_message(chat_id=chat_id, text=f"✅ Пользователь {user_id} разблокирован.")
-            else:
+        else:
             await context.bot.send_message(chat_id=chat_id, text=f"❌ Ошибка разблокировки пользователя {user_id}.")
     
     async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
