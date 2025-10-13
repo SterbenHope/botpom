@@ -129,14 +129,14 @@ class ApplicationBot:
         
         # Проверяем, это админский чат
         if str(chat_id) in [str(chat_id_config) for chat_id_config in ADMIN_CHATS.values()]:
-                logger.info(f"Это админский чат {chat_id}")
+            logger.info(f"Это админский чат {chat_id}")
             
             # Проверяем ответ на сообщение бота
             if update.message.reply_to_message and update.message.reply_to_message.from_user.is_bot:
                 logger.info(f"Ответ администратора на сообщение бота - обрабатываем для пересылки")
-                        await self.handle_admin_response(update, context)
-            return
-        
+                await self.handle_admin_response(update, context)
+                return
+            
             # Любое другое сообщение в админском чате игнорируем
             return
         
