@@ -172,7 +172,7 @@ class ApplicationBot:
         }
         
         # Отправляем заявку админу
-            admin_message = f"""
+        admin_message = f"""
 📋 НОВАЯ ЗАЯВКА
 
 💸 <b>{operation_text}</b>
@@ -183,23 +183,23 @@ class ApplicationBot:
 📝 Заявка: {application_text}
 
 ⏰ Время: {time.strftime('%Y-%m-%d %H:%M:%S')}
-            """
-            
-            try:
+        """
+        
+        try:
             await context.bot.send_message(
                 chat_id=ADMIN_CHATS[direction],
-                    text=admin_message,
+                text=admin_message,
                 parse_mode='HTML'
-                )
-                
+            )
+            
             # Отправляем подтверждение пользователю
-                await update.message.reply_text(
+            await update.message.reply_text(
                 f"✅ Заявка отправлена в направление '{DIRECTIONS[direction]}'!\n\n"
                 f"💸 Тип операции: {operation_text}\n\n"
                 "⏳ Ожидайте ответа от администратора."
-                )
-                
-                # Очищаем состояние пользователя
+            )
+            
+            # Очищаем состояние пользователя
             del self.user_states[user_id]
                 
         except Exception as e:
